@@ -1,9 +1,10 @@
 import {
-  ConflictException,
   Injectable,
-  NotFoundException,
+  InternalServerErrorException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Model } from 'mongoose';
+import * as bcrypt from 'bcrypt';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from 'src/schemas/users.schema';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -13,66 +14,74 @@ import { CreateUserDto } from './dto/create-user.dto';
 export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
-  async login(loginUserDto: LoginUserDto): Promise<User | null> {
+  async login(loginUserDto: LoginUserDto): Promise<User> {
     try {
       const user = await this.userModel.findOne({
-        $or: [
-          { username: loginUserDto.username },
-          { email: loginUserDto.email },
-        ],
+        username: loginUserDto.username,
       });
 
       if (!user) {
-        throw new NotFoundException('User not found');
+        throw new UnauthorizedException('Invalid credentials');
       }
 
-      return user;
+      const passwordValid = await bcrypt.compare(
+        loginUserDto.password,
+        user.password,
+      );
+
+      if (!passwordValid) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      return user as User;
     } catch (error) {
-      console.error('Error while logging in:', error);
-      throw error;
+      console.error('Error during login:', error);
+
+      if (error instanceof UnauthorizedException) {
+        throw new UnauthorizedException('Invalid credentials');
+      } else {
+        throw new InternalServerErrorException('Internal Server Error');
+      }
     }
   }
 
-  async registration(createUserDto: CreateUserDto): Promise<User | null> {
+  async registration(
+    createUserDto: CreateUserDto,
+  ): Promise<User | { warningMessage: string }> {
     try {
-      const existingUser = await this.userModel.collection.findOne({
-        $or: [
-          { username: createUserDto.username },
-          { email: createUserDto.email },
-        ],
+      const existingByUserName = await this.userModel.findOne({
+        username: createUserDto.username,
+      });
+      const existingByEmail = await this.userModel.findOne({
+        email: createUserDto.email,
       });
 
-      if (existingUser) {
-        throw new ConflictException('Username already exists');
+      if (existingByUserName) {
+        return { warningMessage: 'Пользователь с таким именем уже существует' };
       }
 
-      const createdUser = new this.userModel(createUserDto);
+      if (existingByEmail) {
+        return { warningMessage: 'Пользователь с таким email уже существует' };
+      }
 
-      return createdUser.save();
+      const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+
+      const user = new this.userModel({
+        username: createUserDto.username,
+        password: hashedPassword,
+        email: createUserDto.email,
+      });
+
+      return user.save();
     } catch (error) {
       console.error('Error during user registration:', error);
       throw error;
     }
   }
 
-  async findOne(filter: {
-    where: {
-      id?: string;
-      username?: string;
-      email?: string;
-    };
-  }): Promise<User | null> {
-    try {
-      if (!filter || !filter.where || typeof filter.where !== 'object') {
-        console.error('Invalid filter:', filter);
-        return null;
-      }
-
-      const user = await this.userModel.findOne({ where: filter.where });
-      return user;
-    } catch (error) {
-      console.error('Error while fetching user:', error);
-      throw error;
-    }
+  async findOne(usernameOrEmail: string): Promise<User> {
+    return this.userModel.findOne({
+      $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
+    });
   }
 }
