@@ -5,6 +5,7 @@ import { MongooseConfigService } from './config/MongooseConfigService';
 import { UsersModule } from './users/users.module';
 import { AuthController } from './auth/auth.controller';
 import { AuthModule } from './auth/auth.module';
+import { ClothModule } from './cloth/cloth.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -18,6 +19,7 @@ import configuration from './config/configuration';
     }),
     UsersModule,
     AuthModule,
+    ClothModule,
   ],
   controllers: [AuthController],
 })
