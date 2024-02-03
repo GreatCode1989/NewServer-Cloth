@@ -14,6 +14,16 @@ export class ClothService {
     return this.clothModel.find().exec();
   }
 
+  async searchItem(query: string): Promise<Cloth[]> {
+    const regexQuery = new RegExp(query, 'i');
+
+    return this.clothModel
+      .find({
+        text: { $regex: regexQuery },
+      })
+      .exec();
+  }
+
   async popularity(): Promise<Cloth[]> {
     return this.clothModel
       .find({

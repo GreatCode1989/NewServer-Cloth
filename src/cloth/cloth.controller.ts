@@ -38,6 +38,17 @@ export class ClothController {
     }
   }
 
+  @Post('search')
+  async search(@Body() { search }: { search: string }) {
+    try {
+      const searchClothes = await this.clothService.searchItem(search);
+      return searchClothes;
+    } catch (error) {
+      console.error('Error getting search clothes:', error);
+      throw error;
+    }
+  }
+
   @Get('popularity')
   async getPopularClothes(): Promise<Cloth[]> {
     try {
