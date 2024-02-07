@@ -6,6 +6,7 @@ import { UsersModule } from './users/users.module';
 import { AuthController } from './auth/auth.controller';
 import { AuthModule } from './auth/auth.module';
 import { ClothModule } from './cloth/cloth.module';
+import { CartModule } from './cart/cart.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -20,6 +21,7 @@ import configuration from './config/configuration';
     UsersModule,
     AuthModule,
     ClothModule,
+    CartModule,
   ],
   controllers: [AuthController],
 })

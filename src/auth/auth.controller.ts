@@ -39,6 +39,7 @@ export class AuthController {
         ...refresh,
         username: user.username,
         email: user.email,
+        id: user._id,
       });
     } catch (error) {
       console.error('Error during user login:', error);

@@ -1,5 +1,5 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 
 export type ClothDocument = Cloth & Document;
 
@@ -7,6 +7,7 @@ export type ClothDocument = Cloth & Document;
 export class Cloth {
   @Prop({ required: true })
   text: string;
+  _id: mongoose.Types.ObjectId | string;
 
   @Prop({ required: true })
   description: string;
