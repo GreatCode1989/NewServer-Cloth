@@ -5,7 +5,9 @@ import { Cart, CartDocument } from 'src/schemas/cart.schemas';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UsersService } from 'src/users/users.service';
 import { ClothService } from 'src/cloth/cloth.service';
-import { CheckCartItemDto } from './dto/check-cart-item-dto';
+import { CheckCartItemDto } from './dto/check-cart-item.dto';
+import { GetCartUserIdDto } from './dto/get-cart-userid.dto';
+import { DeleteCartDto } from './dto/delete-cart.dto';
 
 @Injectable()
 export class CartService {
@@ -39,9 +41,29 @@ export class CartService {
     } else return false;
   }
 
+  async removeCartItem(deleteCartDto: DeleteCartDto): Promise<boolean> {
+    try {
+      const result = await this.cartModel
+        .deleteOne({
+          _id: new Types.ObjectId(deleteCartDto.cartId),
+        })
+        .exec();
+
+      return result.deletedCount > 0;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async findOne(partId: string): Promise<Cart | null> {
     return this.cartModel
       .findOne({ partId: new Types.ObjectId(partId) })
+      .exec();
+  }
+
+  async getByUserId(getCartUserIdDto: GetCartUserIdDto): Promise<Cart[]> {
+    return this.cartModel
+      .find({ userId: new Types.ObjectId(getCartUserIdDto.userId) })
       .exec();
   }
 }
